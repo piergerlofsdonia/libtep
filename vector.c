@@ -26,11 +26,12 @@ void AllocateInputString(char **ptr_arr, unsigned int struct_size);
 void ParseInputString(char **str_ptr_arr, char *input_string);
 void InitaliseStruct(struct book *array_ptr, unsigned int array_size);
 int ReallocateStruct(struct book *vec_ptr, unsigned int bytes_to_add);
-int AddStructParams(struct book *vec_ptr, char *name, char *author, unsigned int pages, unsigned long ISBN);
+int AddStructParams(struct book *vec_ptr, char **string_ptr);
 
 int main() 
 {
 	const unsigned int struct_size = 4;
+	unsigned int struct_elem = 0;
 	// Initalise vector array.
 	struct book *vec_array = (struct book *) malloc(sizeof(struct book) * MAX_BOOKS);
 	InitaliseStruct(vec_array, MAX_BOOKS);
@@ -49,12 +50,11 @@ int main()
 		// Take an input line from the command-line of length equal to author+title+digits+spaces+commas.
 		fgets(input_string, line_length, stdin);
 		ParseInputString(ptr_arr, input_string);
-		break; // TODO: Move 'AddStructParams' functionality (below) inside while loop.
+		
+		int rtn_code = AddStructParams(&vec_array[struct_elem], ptr_arr);
+		if ( rtn_code <= 0 ) { perror("Error whilst adding struct element to array\n"); exit(0); }
+		struct_elem++;
 	}
-	
-	if ( AddStructParams(&vec_array[0], "Title", "Author", 300, 123456789) <= 0 ) 
-		{ perror("Error whilst adding struct element values!\n"); exit(0); };
-	
 }
 
 void AllocateInputString(char **ptr_arr, unsigned int struct_size)
@@ -81,7 +81,6 @@ void ParseInputString(char **str_ptr_arr, char *input_string)
 	input_string = ConcatenateString(input_string, ", "); 
 	char *part_string = calloc(1, 1);
 	int string_length = strlen(input_string);
-	printf("%s\n", input_string);
 
 	for ( i = 0; i < string_length; i++ ) {
 		if ( input_string[i] == 44 ) {
@@ -135,12 +134,14 @@ void InitaliseStruct(struct book *array_ptr, unsigned int array_size)
 	}	
 }
 
-int AddStructParams(struct book *vec_ptr, char *name, char *author, unsigned int pages, unsigned long ISBN) 
+int AddStructParams(struct book *vec_ptr, char **string_ptr) 
 {
-	vec_ptr->name = name;
-	vec_ptr->author = author;
+	unsigned int pages = atoi(string_ptr[2]);
+	unsigned long isbn = atoi(string_ptr[3]);
+	vec_ptr->name = string_ptr[0];
+	vec_ptr->author = string_ptr[1];
 	vec_ptr->pages = pages;
-	vec_ptr->ISBN = ISBN;
+	vec_ptr->ISBN = isbn;
 	printf("The contents of %s are: %s, %u, %lu\n", vec_ptr->name, vec_ptr->author, vec_ptr->pages, vec_ptr->ISBN);
 	return 1;
 }
