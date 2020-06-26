@@ -3,10 +3,11 @@
 #else
 #define _POSIX_C_SOURCE 200809L
 #endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#define MAX_BOOKS 10
+
 #define MAX_TITLE_LENGTH 30
 #define MAX_AUTHOR_LENGTH 30
 #define MAX_PAGE_DIGITS 5
@@ -17,25 +18,27 @@ struct book
 	char *name;
 	char *author;
 	unsigned int pages;
-	unsigned long ISBN;
+	unsigned long isbn;
 	// short localisation; // Just emulating a system in which localised copies might be given an ID.
 };
 
 char *ConcatenateString(char *str, char* str_to_add);
 void AllocateInputString(char **ptr_arr, unsigned int struct_size);
 void ParseInputString(char **str_ptr_arr, char *input_string);
-void InitaliseStruct(struct book *array_ptr, unsigned int array_size);
+void InitaliseStruct(struct book *struct_ptr);
 int ReallocateStruct(struct book *vec_ptr, unsigned int bytes_to_add);
 int AddStructParams(struct book *vec_ptr, char **string_ptr);
 
 int main() 
 {
 	const unsigned int struct_size = 4;
-	unsigned int struct_elem = 0;
+	unsigned int array_size = 1;
+	unsigned int book_count = array_size;
 	// Initalise vector array.
-	struct book *vec_array = (struct book *) malloc(sizeof(struct book) * MAX_BOOKS);
-	InitaliseStruct(vec_array, MAX_BOOKS);
-
+	
+	struct book *vec_array = (struct book *) malloc(sizeof(struct book) * book_count);
+	InitaliseStruct(&vec_array[0]);
+		
 	unsigned int line_length = (MAX_TITLE_LENGTH + MAX_AUTHOR_LENGTH + sizeof(unsigned int) + sizeof(unsigned long) + 6);
 	// Initalise an array of char pointers.
 	char **ptr_arr = malloc(struct_size * sizeof(char *));
@@ -46,14 +49,21 @@ int main()
 
 	while(1)
 	{
-		printf("Enter a list of arguments to enter a book into the vector array: (e.g. Operating Systems, Arpaci-Dussea, 675, 198508649)\n");
+		printf("\nEnter a list of arguments to enter a book into the vector array: (e.g. Operating Systems, Arpaci-Dussea, 675, 198508649)\n");
 		// Take an input line from the command-line of length equal to author+title+digits+spaces+commas.
 		fgets(input_string, line_length, stdin);
 		ParseInputString(ptr_arr, input_string);
+		if ( book_count > array_size ) {
+			vec_array = realloc(vec_array, sizeof(struct book) * book_count); 
+			array_size = book_count;		
+		}
 		
-		int rtn_code = AddStructParams(&vec_array[struct_elem], ptr_arr);
-		if ( rtn_code <= 0 ) { perror("Error whilst adding struct element to array\n"); exit(0); }
-		struct_elem++;
+		int rtn_code = AddStructParams(&vec_array[book_count-1], ptr_arr);
+		if ( rtn_code <= 0 ) { perror("Error whilst adding struct element to array\n"); exit(0); 
+		} else {
+			printf("Size increase: vec_array size is: %lu bytes\n", sizeof(struct book) * book_count);	
+			book_count++;
+		}	
 	}
 }
 
@@ -117,21 +127,17 @@ char *ConcatenateString(char *str, char *str_to_add)
 	return rtn_str;
 }
 
-void InitaliseStruct(struct book *array_ptr, unsigned int array_size) 
+void InitaliseStruct(struct book *struct_ptr) 
 {
-	struct book blank_book = {"", "", 0, 0};
-	int i;
-	
-	// Replace this with a realloc or malloc of the original pointer if needed.	
-	if (!array_ptr) { perror("Initalisation error!\n"); exit(0); }
+	struct book blank = {"", "", 0, 0};
 
-	for ( i = 0; i < array_size; i++ ) {
-		array_ptr[i].name = blank_book.name;
-		array_ptr[i].author = blank_book.author;
-		array_ptr[i].pages = blank_book.pages;
-		array_ptr[i].ISBN = blank_book.ISBN;
-		
-	}	
+	// Replace this with a realloc or malloc of the original pointer if needed.	
+	if (!struct_ptr) { perror("Initalisation error!\n"); exit(0); }
+	
+	struct_ptr->name = blank.name;
+	struct_ptr->author = blank.author;
+	struct_ptr->pages = blank.pages;
+	struct_ptr->isbn = blank.isbn;
 }
 
 int AddStructParams(struct book *vec_ptr, char **string_ptr) 
@@ -141,7 +147,7 @@ int AddStructParams(struct book *vec_ptr, char **string_ptr)
 	vec_ptr->name = string_ptr[0];
 	vec_ptr->author = string_ptr[1];
 	vec_ptr->pages = pages;
-	vec_ptr->ISBN = isbn;
-	printf("The contents of %s are: %s, %u, %lu\n", vec_ptr->name, vec_ptr->author, vec_ptr->pages, vec_ptr->ISBN);
+	vec_ptr->isbn = isbn;
+	printf("The contents of %s are: %s, %u, %lu\n", vec_ptr->name, vec_ptr->author, vec_ptr->pages, vec_ptr->isbn);
 	return 1;
 }
