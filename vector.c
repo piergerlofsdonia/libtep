@@ -2,7 +2,7 @@
 #define __STDC_WANT_LIB_EXT2__ 1
 #else
 #define _POSIX_C_SOURCE 200809L
-#endif
+#endif /* Required for strdup. */
 
 #include <getopt.h> /* Used instead of unistd.h, see: "Mead's guide to getopt". */
 #include <stdlib.h>
@@ -28,68 +28,111 @@ void ParseInputString(char **str_ptr_arr, char *input_string);
 void InitaliseStruct(struct book *struct_ptr);
 int ReallocateStruct(struct book *vec_ptr, unsigned int bytes_to_add);
 int AddStructParams(struct book *vec_ptr, char **string_ptr);
-int ParseCommandLine(int argc, char **argv);
+int ParseCommandLine(int argc, char **argv, struct book *vec_arr, unsigned int struct_size);
+unsigned int AddRecord(struct book *vec_arr, char *arg_string, unsigned int struct_size, unsigned int book_count, unsigned int array_size); 
+FILE *OpenFile(const char *filename, const char *mode);
 void PrintHelpFile();
+unsigned int ReadLines(FILE *fp, size_t max_lines);
 
 int main(int argc, char **argv) 
 {
-	const unsigned int struct_size = 4;
-	unsigned int array_size = 1;
-	unsigned int book_count = array_size;
-	struct book *vec_array = (struct book *) malloc(sizeof(struct book) * book_count);
-	unsigned int line_length = (MAX_TITLE_LENGTH + MAX_AUTHOR_LENGTH + sizeof(unsigned int) + sizeof(unsigned long) + 6);
-	char **ptr_arr = malloc(struct_size * sizeof(char *));
-	char *input_string = malloc(line_length);
+	unsigned int struct_size = 4;
+	struct book *vec_arr = (struct book *) malloc(sizeof(struct book));
 	int rtn_code;
 
-	rtn_code = ParseCommandLine(argc, argv);	
-	/* check rtn_code */
-	InitaliseStruct(&vec_array[0]);
+	rtn_code = ParseCommandLine(argc, argv, vec_arr, struct_size);	
+	printf("Rtn code: %d\n", rtn_code);
+	/* check rtn_code 
+	InitaliseStruct(&vec_arr[0]);
 	AllocateInputString(ptr_arr, struct_size);
 	
 	while(1)
 	{
 		printf("\nEnter a list of arguments to enter a book into the vector array: (e.g. Operating Systems, Arpaci-Dussea, 675, 198508649)\n");
-		input_string = fgets(input_string, line_length, stdin);
-		
+		input_string = fgets(input_string, line_length, stdin);	
 		
 		ParseInputString(ptr_arr, input_string);
 		if ( book_count > array_size ) {
-			vec_array = realloc(vec_array, sizeof(struct book) * book_count); 
+			vec_arr = realloc(vec_arr, sizeof(struct book) * book_count); 
 			array_size = book_count;		
 		}
 		
-		rtn_code = AddStructParams(&vec_array[book_count-1], ptr_arr);
+		rtn_code = AddStructParams(&vec_arr[book_count-1], ptr_arr);
 		if ( rtn_code <= 0 ) { perror("Error whilst adding struct element to array\n"); exit(0); 
 		} else {
-			printf("Size increase: vec_array size is: %lu bytes\n", sizeof(struct book) * book_count);	
+			printf("Size increase: vec_arr size is: %lu bytes\n", sizeof(struct book) * book_count);	
 			book_count++;
 		}	
 	}
+	*/
 }
 
-int ParseCommandLine(int argc, char **argv)
+int ParseCommandLine(int argc, char **argv, struct book *vec_arr, unsigned int struct_size)
 {
+	/*
+	   A psuedo-main function.
+	*/
+
 	int opt;
 	const char *option_string = "Hha:A:r:R:";
+	FILE *lib_file;
+	size_t max_lines = (MAX_TITLE_LENGTH + MAX_AUTHOR_LENGTH + sizeof(unsigned int) + sizeof(unsigned long));
+	unsigned int book_count;
+	unsigned int array_size;
 
 	while ((opt = getopt(argc, argv, option_string)) != EOF ) {
 		switch(opt) {
-		case 'h': 
+		case 'h': /* Help, prints the help section of the readme.md file */
 			PrintHelpFile();
 			break;
-		case 'a':
-			break;
+		case 'a': /* Add, opens the library file and adds a new record to it, if valid. */
 		case 'r':
+		case 'p':
+			lib_file = OpenFile("lib.txt", "r+");
+			book_count = ReadLines(lib_file, max_lines);
+			array_size = book_count;			
+			printf("%d: %d\n", book_count, array_size);
+			fclose(lib_file);
+			/* TODO: Set book_count and array_size here by reading and instantiating the vector array prior. */
 			break;
 		case '?': 
 			fprintf(stderr, "Usage %s [-har] [file...]\n", argv[0]);
 			exit(EXIT_FAILURE);
 			break;
-		}
+		} 
 	}
 	
 	return 1;
+}
+
+FILE *OpenFile(const char *filename, const char *mode)
+{
+	FILE *fp; 
+	
+	fp = fopen(filename, mode);
+
+	if ( fp == NULL ) {
+		printf("Creating file %s\n", filename);
+		fp = fopen(filename, "wb");
+		if ( fp == NULL ) {
+			fprintf(stderr, "Error (%d): Opening %s file\n", __LINE__, filename);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	return fp;
+}
+
+unsigned int ReadLines(FILE *fp, size_t line_max)
+{
+	char *lp = NULL;
+	unsigned int lines = 0;
+	
+	while(getline(&lp, &line_max, fp) != -1) {
+		lines++;
+	}
+
+	return lines;
 }
 
 void PrintHelpFile(void) 
@@ -122,10 +165,33 @@ void PrintHelpFile(void)
 		}
 
 		if ( p_flag == 0 ) { printf("%s\n", lp); }
+	}	
+	
+	free(lp); fclose(fp);
+
+}
+
+unsigned int AddRecord(struct book *vec_arr, char *arg_string, unsigned int struct_size, unsigned int book_count, unsigned int array_size) 
+{
+	char **ptr_arr = malloc(sizeof(char *) * struct_size); /* Array to char pointers */
+	int rtn_code;
+
+	book_count++;
+	ParseInputString(ptr_arr, arg_string);
+	if ( book_count > array_size ) { 
+		vec_arr = realloc(vec_arr, sizeof(struct book) * book_count);
 	}
 	
-	/* Figure out if it's possible to read in .md's or not */
-	free(lp); fclose(fp);
+	rtn_code = AddStructParams(&vec_arr[book_count-1], ptr_arr);
+	if ( rtn_code <= 0 ) { 
+		perror("Error whilst adding struct elements to array\n");
+		exit(EXIT_FAILURE); 
+	} else {
+		/* TODO: Function call to update the library file with the newest entry */
+		
+	}
+
+	return book_count;
 }
 
 void AllocateInputString(char **ptr_arr, unsigned int struct_size)
