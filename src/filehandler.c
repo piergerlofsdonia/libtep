@@ -1,3 +1,4 @@
+#define  _POSIX_C_SOURCE 200809L
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdlib.h>
@@ -8,24 +9,29 @@
 
 static FILE *OpenFile(char*, const char*, unsigned short);
 static int AddLine(FILE*, size_t, book*, size_t);
+static int RemoveLine(FILE*, size_t, book*, size_t);
 static char *ConcatString(char*, char*);
 static char *itoa(int);
 
-/* Create itoa function */
+static char *filename = "../lib.txt";
 
-static FILE *OpenFile(char *filename, const char *mode, unsigned short recurr)
+static FILE *OpenFile(char *inp_filename, const char *mode, unsigned short recurr)
 {
-	FILE *fp = fopen(filename, mode);
+	if (memcmp(inp_filename, filename, strlen(filename)) == 0 || inp_filename == NULL) {
+		inp_filename = filename;
+	}
+
+	FILE *fp = fopen(inp_filename, mode);
 
 	if ( fp == NULL ) {
 		if ( recurr == 1 ) 
 		{
-			fprintf(stderr, "Error [%d]: Opening %s file\n", __LINE__, filename);
+			fprintf(stderr, "Error [%d]: Opening %s file\n", __LINE__, inp_filename);
 			exit(EXIT_FAILURE);
 		} else {
-			printf("Creating %s file...\n", filename);
-			fp = OpenFile(filename, "wb", 1);
-			fp = freopen(filename, mode, fp);
+			printf("Creating %s file...\n", inp_filename);
+			fp = OpenFile(inp_filename, "wb", 1);
+			fp = freopen(inp_filename, mode, fp);
 		}
 	}
 
@@ -49,11 +55,6 @@ static int AddLine(FILE *fp, size_t max_l_len, book *to_add, size_t struct_size)
 	args_arr[2] = itoa(to_add->pages);
 	args_arr[3] = itoa(to_add->uid);
 
-	/*for ( i = 0; i < struct_size-1; i++ ) 
-	{
-		printf("%s\n", args_arr[i]);
-	}*/
-
 	/* Traverse struct and concatenate each element into a string */
 	for (i=0; i<(struct_size-1); i++) {
 		if ( i != (struct_size-2)) {
@@ -75,6 +76,39 @@ static int AddLine(FILE *fp, size_t max_l_len, book *to_add, size_t struct_size)
 	printf("%s\n", line);	
 	fprintf(fp, "%s\n", line);
 	return 1;
+}
+
+static int RemoveLine(FILE *fp, size_t max_l_len, book *to_rem, size_t struct_size)
+{
+	/* Removes a line from the lib.txt file using the book->line variable */
+	char *n_fn = "../lib_temp.txt";
+	FILE *n_fp = OpenFile(n_fn, "w", 0);
+	char *lp = NULL;
+	unsigned int current_line = 0;
+	unsigned int target_line = to_rem->line;
+	if ( fp != NULL ) {
+		fp = freopen(filename, "r", fp);
+	} else {
+		fp = OpenFile(filename, "r", 0);
+	}
+
+	while(getline(&lp, &max_l_len, fp) != -1) {
+		if ( current_line != to_rem->line ) {
+			fprintf(n_fp, "%s", lp);
+			printf("Line: %d - %s", current_line, lp);
+		}
+
+		current_line++;
+	}
+	
+	if ( remove(filename) == 0 ) {
+		if ( rename(n_fn, filename) == 0 ) {
+			fclose(n_fp);
+			return 1;	
+		}
+	}
+
+	return -1;
 }
 
 static char *ConcatString(char *o_str, char *a_str)
