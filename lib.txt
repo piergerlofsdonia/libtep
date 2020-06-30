@@ -1,2 +1,4 @@
-The Elements of Computing Systems, Nisan & Schocken, 324, 9780262640688
-The Rust Programming Language, Klabnik & Nichols, 526, 9781718500440
+The Rust Programming Language, Klabnik & Nichols, 526, 9781718500440, 1000
+The Lusty Argonian Maid, Crassius Curio, 2, 0, 1001
+First Title, First Author, 123, 1000
+

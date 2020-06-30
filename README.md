@@ -9,13 +9,13 @@ Arguments:
 * use -a to add a record (requires arguments).
 * use -r to remove a record (requires argument).
 * use -p to print out all records.
-* Adding and removing records requires a subsequent comma-seperated list of information (title, author, page count, isbn) at least one additional argument is required.
+* Adding and removing records requires a string format comma-seperated list of information (title, author, page count, isbn) at least one additional argument is required.
 
 e.g: 
 
-./program -a Operating Systems, Arpaci-Dusseau, 675, 198508649
+./program -a "Operating Systems, Arpaci-Dusseau, 675, 198508649"
 
-./program -r Operating Systems, Arpaci-Dusseau
+./program -r "Operating Systems, Arpaci-Dusseau"
 
 
 ## todo:
