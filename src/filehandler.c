@@ -10,8 +10,12 @@
 static FILE *OpenFile(char*, const char*, unsigned short);
 static int AddLine(FILE*, size_t, book*, size_t);
 static int RemoveLine(FILE*, size_t, book*, size_t);
+static unsigned int CountLine(FILE*, size_t);
 static char *ConcatString(char*, char*);
 static char *itoa(int);
+static book CslToStruct(char*, size_t, size_t);
+/* TODO: Add Struct->CSL */
+static unsigned int FindLine(FILE*, char*, size_t);
 
 static char *filename = "../lib.txt";
 
@@ -50,6 +54,8 @@ static int AddLine(FILE *fp, size_t max_l_len, book *to_add, size_t struct_size)
 		
 	char **args_arr = malloc(sizeof(char *) * struct_size);
 	
+	fp = freopen(filename, "a", fp);
+
 	args_arr[0] = to_add->title;
 	args_arr[1] = to_add->author;
 	args_arr[2] = itoa(to_add->pages);
@@ -71,7 +77,6 @@ static int AddLine(FILE *fp, size_t max_l_len, book *to_add, size_t struct_size)
 
 	}
 
-	/* Add LineCount to populate struct->line */
 	line[line_p] = '\0';
 	printf("%s\n", line);	
 	fprintf(fp, "%s\n", line);
@@ -84,18 +89,36 @@ static int RemoveLine(FILE *fp, size_t max_l_len, book *to_rem, size_t struct_si
 	char *n_fn = "../lib_temp.txt";
 	FILE *n_fp = OpenFile(n_fn, "w", 0);
 	char *lp = NULL;
+	size_t uid_len = 5;
+	char *uid = malloc(sizeof(char) * uid_len);
+	unsigned int converted_uid;
 	unsigned int current_line = 0;
 	unsigned int target_line = to_rem->line;
+
 	if ( fp != NULL ) {
 		fp = freopen(filename, "r", fp);
 	} else {
 		fp = OpenFile(filename, "r", 0);
 	}
 
+	/* Parse out the uid (last value in the string) and compare against to_rem->uid */
+
 	while(getline(&lp, &max_l_len, fp) != -1) {
 		if ( current_line != to_rem->line ) {
 			fprintf(n_fp, "%s", lp);
 			printf("Line: %d - %s", current_line, lp);
+		} else {
+			memcpy(uid, lp+(strlen(lp)-uid_len), uid_len);
+			uid[uid_len-1] = '\0';
+			converted_uid = atoi(uid);
+			if ( converted_uid == getuid()) {	
+				printf("Found: %d [%s] - %s\n", current_line, uid, lp);
+			} else {
+				printf("Cannot remove line %d: you are not the owner of this record\n");
+				fprintf(n_fp, "%s", lp);
+				printf("Line: %d - %s", current_line, lp);
+			}
+
 		}
 
 		current_line++;
@@ -109,6 +132,42 @@ static int RemoveLine(FILE *fp, size_t max_l_len, book *to_rem, size_t struct_si
 	}
 
 	return -1;
+}
+
+static unsigned int CountLine(FILE *fp, size_t max_l_len)
+{
+	fp = freopen(filename, "r", fp);
+	char *lp = NULL;
+	unsigned int line = 0;
+
+	while(getline(&lp, &max_l_len, fp) != -1) {
+		line++;
+	}
+			
+	return (line-1);
+}
+
+static unsigned int FindLine(FILE *fp, char *title_str, size_t max_l_len) 
+{
+	fp = freopen(filename, "r", fp);
+	char *lp = NULL;
+	unsigned int line_n = 0;
+	unsigned int title_len = strlen(title_str);
+	char *comp_str = (char *) malloc(sizeof(char) * title_len+1);
+
+	while(getline(&lp, &max_l_len, fp) != EOF) {
+		memcpy(comp_str, lp, title_len+1);
+		comp_str[title_len] = '\0';
+		printf("%s vs. %s\n", comp_str, title_str);
+		if ( memcmp(title_str, comp_str, title_len) == 0 ) {
+			return line_n;
+		}
+		
+		line_n++;
+
+	}
+
+	return 0;
 }
 
 static char *ConcatString(char *o_str, char *a_str)
@@ -126,4 +185,53 @@ static char *itoa(int n)
 	char *str = (char *) calloc(1, sizeof(char) * sizeof(int)+1);
 	sprintf(str, "%d", n);
 	return str;
+}
+
+static book CslToStruct(char *inp_str, size_t max_l_len, size_t struct_size)
+{
+	book rtn_struct;
+	book defaults = {"No Title", "No Author", 0, 0};
+
+	unsigned int i = 0;
+	unsigned int n = 0; 
+	unsigned int c = 0;
+	unsigned int p = 0;
+	char **str_arr = calloc(struct_size, (sizeof(char) * max_l_len));
+	unsigned int ps_len;
+
+	inp_str = ConcatString(inp_str, ",");
+	ps_len = strlen(inp_str);
+	if ( ps_len > max_l_len ) { 
+		fprintf(stderr, "Error [%d]: Input string is too long!\n", __LINE__);
+		exit(EXIT_FAILURE);
+	}
+
+	for(; n < ps_len ; n++) {
+		if ( (int)inp_str[n] == 44 ) { /* ASCII 44 is a comma */
+			p = n-c; /* Position is current index minus the last 'current' position. */
+			str_arr[i] = realloc(str_arr[i], p+1);
+			memcpy(str_arr[i], inp_str + c, p+1);
+			str_arr[i][p] = '\0';
+			i++;
+	
+			if ( (int)inp_str[n+1] == 32 ) { /* ASCII 32 is whitespace */
+				c = n + 2;
+			} else {
+				c = n + 1;
+			}	
+
+		}
+		
+	}
+
+	free(inp_str);
+	
+	rtn_struct.title = (str_arr[0] != NULL) ? str_arr[0] : defaults.title ;
+	rtn_struct.author = (str_arr[1] != NULL) ? str_arr[1] : defaults.author;
+	rtn_struct.pages = (str_arr[2] != NULL) ? atoi(str_arr[2]) : defaults.pages;
+	rtn_struct.uid = getuid(); 
+
+	printf("Struct: %s - %s - %d - %d - %d\n", rtn_struct.title, rtn_struct.author, rtn_struct.pages, rtn_struct.uid);
+
+	return rtn_struct;
 }

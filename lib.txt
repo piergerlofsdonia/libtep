@@ -1,4 +1,5 @@
-The Rust Programming Language, Klabnik & Nichols, 526, 9781718500440, 1000
-The Lusty Argonian Maid, Crassius Curio, 2, 0, 1001
-First Title, First Author, 123, 1000
-
+Book 1, Author 1, 123, 1000
+Book 2, Author 2, 345, 1000
+Book 3, Author 3, 678, 1001
+Book 4, Author 4, 123, 1001
+Input Title, Input Author, 2000, 1001

@@ -1,5 +1,4 @@
- ostep-vectors
-Potential solution to homework question #14:8 from the [OSTEP book](http://pages.cs.wisc.edu/~remzi/OSTEP/) in the form of a command line librarian program. 
+A "librarian" Unix command line program demonstrating methods outlined in the [OSTEP book](http://pages.cs.wisc.edu/~remzi/OSTEP/) (basic vector array data structure using malloc/realloc) and [Hacking: The Art of Exploitation](https://www.amazon.co.uk/Hacking-Art-Exploitation-Jon-Erickson/dp/1593271441) (file access program that accounts for uids).
 
 ## Help:
 
@@ -13,14 +12,14 @@ Arguments:
 
 e.g: 
 
-./program -a "Operating Systems, Arpaci-Dusseau, 675, 198508649"
+./program -a "Operating Systems, Arpaci-Dusseau, 675"
 
 ./program -r "Operating Systems, Arpaci-Dusseau"
 
 
 ## todo:
-1. Get initial memory allocation and initalisation working and passing in _valgrind_ [X].
-2. Create procedures for adding new entries to the struct, reallocating the memory in the vector array and initalising this new entry within each element [-].
-3. Add command line parsing [-].
-4. Remove keyboard input code [].
-5. Add tests, fix bugs [].
+
+TBD.
+
+## Notes:
+... Currently working on a full multi-file reformat based around a file-access structure (e.g. read from file, write to file, re-write file, super simple). The vector array problem outlined in OSTEP is going to be framed around a secondary file which is read in every time the program runs, this holds the 'changed' files - allowing a user to undo an add or remove action.
