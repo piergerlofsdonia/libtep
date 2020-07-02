@@ -10,11 +10,10 @@
 static FILE *OpenFile(char*, const char*, unsigned short);
 static int AddLine(FILE*, size_t, book*, size_t);
 static int RemoveLine(FILE*, size_t, book*, size_t);
-static unsigned int CountLine(FILE*, size_t);
+static unsigned int CountLine(FILE*, size_t, unsigned int);
 static char *ConcatString(char*, char*);
 static char *itoa(int);
 static book CslToStruct(char*, size_t, size_t);
-/* TODO: Add Struct->CSL */
 static char *StructToCsl(book*, size_t, size_t);
 static unsigned int FindLine(FILE*, char*, size_t);
 
@@ -135,16 +134,23 @@ static int RemoveLine(FILE *fp, size_t max_l_len, book *to_rem, size_t struct_si
 	return -1;
 }
 
-static unsigned int CountLine(FILE *fp, size_t max_l_len)
+static unsigned int CountLine(FILE *fp, size_t max_l_len, unsigned int print_bool)
 {
 	fp = freopen(filename, "r", fp);
 	char *lp = NULL;
 	unsigned int line = 0;
 
+	if ( print_bool == 1 ) {
+		printf("Format:\nTitle, Author, Pages, User\n\n");
+	}
+
 	while(getline(&lp, &max_l_len, fp) != -1) {
+		if ( print_bool == 1 ) {
+			printf("%s", lp);
+		}
 		line++;
 	}
-			
+	
 	return (line-1);
 }
 

@@ -40,7 +40,7 @@ int ActionCommandLine(FILE *fp, int argc, char **argv, size_t max_l_len, size_t 
 				switch(opt) {
 					case 'a':
 						AddLine(fp, max_l_len, &inp_book, struct_size);	
-						inp_book.line = CountLine(fp, max_l_len);
+						inp_book.line = CountLine(fp, max_l_len, 0);
 						printf("Output: %s\n", StructToCsl(&inp_book, max_l_len, struct_size));
 						break;
 					case 'r':
@@ -48,15 +48,18 @@ int ActionCommandLine(FILE *fp, int argc, char **argv, size_t max_l_len, size_t 
 						RemoveLine(fp, max_l_len, &inp_book, struct_size);
 					break;
 				}
-				
-				fclose(fp);
-				
+					
+				break;
+			
+			case 'p':
+				CountLine(fp, max_l_len, 1);
 				break;
 			case '?':
 				fprintf(stderr, "Incorrect arugment found\n");
 				return -1;
 		}
 	}
-	
+
+	if ( fp != NULL ) { fclose(fp); }	
 	return 1;
 }
