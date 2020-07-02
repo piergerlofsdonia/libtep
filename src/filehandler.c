@@ -15,6 +15,7 @@ static char *ConcatString(char*, char*);
 static char *itoa(int);
 static book CslToStruct(char*, size_t, size_t);
 /* TODO: Add Struct->CSL */
+static char *StructToCsl(book*, size_t, size_t);
 static unsigned int FindLine(FILE*, char*, size_t);
 
 static char *filename = "../lib.txt";
@@ -160,14 +161,17 @@ static unsigned int FindLine(FILE *fp, char *title_str, size_t max_l_len)
 		comp_str[title_len] = '\0';
 		printf("%s vs. %s\n", comp_str, title_str);
 		if ( memcmp(title_str, comp_str, title_len) == 0 ) {
+			free(comp_str);
 			return line_n;
 		}
 		
 		line_n++;
 
 	}
-
-	return 0;
+	
+	free(comp_str);
+	fprintf(stderr, "Could not find a document in %s with the title: %s\n", filename, title_str);
+	exit(1);
 }
 
 static char *ConcatString(char *o_str, char *a_str)
@@ -234,4 +238,29 @@ static book CslToStruct(char *inp_str, size_t max_l_len, size_t struct_size)
 	printf("Struct: %s - %s - %d - %d - %d\n", rtn_struct.title, rtn_struct.author, rtn_struct.pages, rtn_struct.uid);
 
 	return rtn_struct;
+}
+
+static char *StructToCsl(book *to_convert, size_t max_l_len, size_t struct_size)
+{
+	book defaults = {"No Title", "No Author", 0, 0};
+	char **str_arr = malloc(sizeof(char *) * struct_size - 1);
+	char *part_str = NULL;
+	char *rtn_str = (char *) malloc(sizeof(char) * max_l_len);
+	unsigned int i = 0;
+	unsigned int p = 0;
+	size_t str_len;
+
+	
+	str_arr[0] = to_convert->title; str_arr[1] = to_convert->author; 
+	str_arr[2] = itoa(to_convert->pages); str_arr[3] = itoa(to_convert->uid);
+
+	for ( ; i < struct_size-1; i++ ) {
+		part_str = (i == struct_size-2) ? str_arr[i] : ConcatString(str_arr[i], ", ");
+		str_len = strlen(part_str);
+		memcpy(rtn_str+p, part_str, str_len);
+		p += str_len;
+	}
+
+	rtn_str[p] = '\0';
+	return rtn_str;
 }
