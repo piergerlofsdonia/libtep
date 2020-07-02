@@ -1,11 +1,13 @@
 #include "libtep.h"
 #include <getopt.h>
+#include <unistd.h>
 #include "filehandler.c"
 
 #define MAX_TITLE 30
 #define MAX_AUTHOR 30
 
 int ActionCommandLine(FILE*, int, char**, size_t, size_t);
+char *SetupFileSystem();
 
 int main(int argc, char **argv) 
 {
@@ -13,7 +15,8 @@ int main(int argc, char **argv)
 		Read through "lib.txt" file, parse the lines into book structs and store these in a vector array.	
 	 */
 
-	FILE *lib_file = OpenFile("../lib.txt", "a", 0);
+	SetupFilePath();
+	FILE *lib_file = OpenFile(filename, "a", 0);
 	size_t struct_size = 5;
 	size_t max_length = MAX_TITLE + MAX_AUTHOR + (sizeof(unsigned int) * 3);	
 	/*int rtn_code;*/
@@ -63,3 +66,4 @@ int ActionCommandLine(FILE *fp, int argc, char **argv, size_t max_l_len, size_t 
 	if ( fp != NULL ) { fclose(fp); }	
 	return 1;
 }
+

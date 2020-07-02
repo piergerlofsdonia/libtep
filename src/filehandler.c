@@ -1,10 +1,12 @@
 #define  _POSIX_C_SOURCE 200809L
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 #include "libtep.h"
 
 static FILE *OpenFile(char*, const char*, unsigned short);
@@ -16,8 +18,10 @@ static char *itoa(int);
 static book CslToStruct(char*, size_t, size_t);
 static char *StructToCsl(book*, size_t, size_t);
 static unsigned int FindLine(FILE*, char*, size_t);
+static void SetupFilePath();
 
-static char *filename = "../lib.txt";
+static char *filename = NULL;
+static char *pathname = NULL;
 
 static FILE *OpenFile(char *inp_filename, const char *mode, unsigned short recurr)
 {
@@ -34,8 +38,8 @@ static FILE *OpenFile(char *inp_filename, const char *mode, unsigned short recur
 			exit(EXIT_FAILURE);
 		} else {
 			printf("Creating %s file...\n", inp_filename);
-			fp = OpenFile(inp_filename, "wb", 1);
-			fp = freopen(inp_filename, mode, fp);
+			fp = OpenFile(inp_filename, "ab+", 1);
+			fp = fopen(inp_filename, mode);
 		}
 	}
 
@@ -86,7 +90,7 @@ static int AddLine(FILE *fp, size_t max_l_len, book *to_add, size_t struct_size)
 static int RemoveLine(FILE *fp, size_t max_l_len, book *to_rem, size_t struct_size)
 {
 	/* Removes a line from the lib.txt file using the book->line variable */
-	char *n_fn = "../lib_temp.txt";
+	char *n_fn = ConcatString(pathname, "/lib_temp.txt");
 	FILE *n_fp = OpenFile(n_fn, "w", 0);
 	char *lp = NULL;
 	size_t uid_len = 5;
@@ -269,4 +273,29 @@ static char *StructToCsl(book *to_convert, size_t max_l_len, size_t struct_size)
 
 	rtn_str[p] = '\0';
 	return rtn_str;
+}
+
+void SetupFilePath() 
+{ 
+	/* TODO: Finish this using https://stackoverflow.com/questions/3616595/why-mkdir-fails-to-work-with-tilde */
+	char *home_path = getenv("HOME");
+	char *file_path = NULL;
+	int rtn_code;
+
+	if ( home_path != NULL ) {
+		file_path = ConcatString(home_path, "/libtep");
+		rtn_code = mkdir(file_path, 0777);
+		if ( rtn_code != -1 ) {
+			printf("Directory created: %s\n", file_path);
+		}
+		
+		if ( errno != EEXIST ) {
+			fprintf(stderr, "Error [%d]: mkdir error (%s)\n", __LINE__, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+		
+		pathname = file_path;
+		filename = ConcatString(file_path, "/lib.txt");
+	
+	}
 }
