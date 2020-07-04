@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 int ActionCommandLine(FILE *fp, int argc, char **argv, size_t max_l_len, size_t struct_size)
 {
 	int opt;
-	char *opt_str = "a:A;r:R:pP";
+	char *opt_str = "a:A;r:R:pPhH";
 	book inp_book;
 
 	while ((opt = getopt(argc, argv, opt_str)) != EOF ) {
@@ -53,7 +53,9 @@ int ActionCommandLine(FILE *fp, int argc, char **argv, size_t max_l_len, size_t 
 				}
 					
 				break;
-			
+			case 'h':
+				FindAndPrint("../README.md", "Help", max_l_len);		
+				break;
 			case 'p':
 				CountLine(fp, max_l_len, 1);
 				break;

@@ -19,6 +19,7 @@ static book CslToStruct(char*, size_t, size_t);
 static char *StructToCsl(book*, size_t, size_t);
 static unsigned int FindLine(FILE*, char*, size_t);
 static void SetupFilePath();
+static void FindAndPrint(char*, char*, size_t);
 
 static char *filename = NULL;
 static char *pathname = NULL;
@@ -277,7 +278,6 @@ static char *StructToCsl(book *to_convert, size_t max_l_len, size_t struct_size)
 
 void SetupFilePath() 
 { 
-	/* TODO: Finish this using https://stackoverflow.com/questions/3616595/why-mkdir-fails-to-work-with-tilde */
 	char *home_path = getenv("HOME");
 	char *file_path = NULL;
 	int rtn_code;
@@ -298,4 +298,47 @@ void SetupFilePath()
 		filename = ConcatString(file_path, "/lib.txt");
 	
 	}
+}
+
+void FindAndPrint(char* path, char* match, size_t max_l_len)
+{
+	/* Finds a title in a readme.md file and prints the contents of that section (up to the next title) */
+	FILE *fp = OpenFile(path, "r", 0);
+	char *lp = NULL;
+	size_t lc_size = strlen(match);
+	char *lc = (char *) malloc(sizeof(char) * lc_size+1);
+	unsigned int n = 0;
+	unsigned int max_pound = 6; /* Reasonable value for the maximum number of pound symbols in a single README line, swap for arg or define if needed */
+	int m_flag = -1;
+	int p_flag = -1;
+
+	if ( fp == NULL ) {
+		fprintf(stderr, "No help file [%s] to display.\n", path);
+		exit(EXIT_FAILURE);	
+	}
+	
+	while(getline(&lp, &max_l_len, fp) != EOF) {
+		n=0;	
+		if ( lp[n] == '#' ) {
+				
+			for ( ; n <= max_pound; n++ ) {
+				if ( lp[n] != '#' && lp[n] != ' ' ) {			
+					memcpy(lc, lp+n, lc_size+1);
+					lc[lc_size] = '\0';
+					m_flag = strncmp(match, lc, lc_size);
+					break;
+				}				
+			}
+		}
+
+		if ( m_flag == 0 && p_flag == 0) {
+			printf("%s\n", lp); 
+		} else if ( m_flag == 0 ) {
+			p_flag++;
+		}
+
+	}
+
+	fclose(fp);
+	free(lc);
 }
