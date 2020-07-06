@@ -11,21 +11,16 @@ char *SetupFileSystem();
 
 int main(int argc, char **argv) 
 {
-	/*
-		Read through "lib.txt" file, parse the lines into book structs and store these in a vector array.	
-	 */
-
 	SetupFilePath();
 	FILE *lib_file = OpenFile(filename, "a", 0);
 	size_t struct_size = 5;
 	size_t max_length = MAX_TITLE + MAX_AUTHOR + (sizeof(unsigned int) * 3);	
-	/*int rtn_code;*/
 
 	if ( ActionCommandLine(lib_file, argc, argv, max_length, struct_size) < 1 ) {
 		fprintf(stderr, "Error whilst parsing command line\n");
 		exit(EXIT_FAILURE);
 	}
-	
+		
 }
 
 int ActionCommandLine(FILE *fp, int argc, char **argv, size_t max_l_len, size_t struct_size)
@@ -44,7 +39,6 @@ int ActionCommandLine(FILE *fp, int argc, char **argv, size_t max_l_len, size_t 
 					case 'a':
 						AddLine(fp, max_l_len, &inp_book, struct_size);	
 						inp_book.line = CountLine(fp, max_l_len, 0);
-						printf("Output: %s\n", StructToCsl(&inp_book, max_l_len, struct_size));
 						break;
 					case 'r':
 						inp_book.line = FindLine(fp, inp_book.title, max_l_len);					
@@ -65,7 +59,8 @@ int ActionCommandLine(FILE *fp, int argc, char **argv, size_t max_l_len, size_t 
 		}
 	}
 
-	if ( fp != NULL ) { fclose(fp); }	
+	if ( fp != NULL ) { fclose(fp); }
+	
 	return 1;
 }
 

@@ -83,7 +83,6 @@ static int AddLine(FILE *fp, size_t max_l_len, book *to_add, size_t struct_size)
 	}
 
 	line[line_p] = '\0';
-	printf("%s\n", line);	
 	fprintf(fp, "%s\n", line);
 	return 1;
 }
@@ -111,17 +110,13 @@ static int RemoveLine(FILE *fp, size_t max_l_len, book *to_rem, size_t struct_si
 	while(getline(&lp, &max_l_len, fp) != -1) {
 		if ( current_line != to_rem->line ) {
 			fprintf(n_fp, "%s", lp);
-			printf("Line: %d - %s", current_line, lp);
 		} else {
 			memcpy(uid, lp+(strlen(lp)-uid_len), uid_len);
 			uid[uid_len-1] = '\0';
 			converted_uid = atoi(uid);
-			if ( converted_uid == getuid()) {	
-				printf("Found: %d [%s] - %s\n", current_line, uid, lp);
-			} else {
+			if ( converted_uid != getuid()) {	
 				printf("Cannot remove line %d: you are not the owner of this record\n");
 				fprintf(n_fp, "%s", lp);
-				printf("Line: %d - %s", current_line, lp);
 			}
 
 		}
@@ -170,7 +165,6 @@ static unsigned int FindLine(FILE *fp, char *title_str, size_t max_l_len)
 	while(getline(&lp, &max_l_len, fp) != EOF) {
 		memcpy(comp_str, lp, title_len+1);
 		comp_str[title_len] = '\0';
-		printf("%s vs. %s\n", comp_str, title_str);
 		if ( memcmp(title_str, comp_str, title_len) == 0 ) {
 			free(comp_str);
 			return line_n;
@@ -246,7 +240,6 @@ static book CslToStruct(char *inp_str, size_t max_l_len, size_t struct_size)
 	rtn_struct.pages = (str_arr[2] != NULL) ? atoi(str_arr[2]) : defaults.pages;
 	rtn_struct.uid = getuid(); 
 
-	printf("Struct: %s - %s - %d - %d - %d\n", rtn_struct.title, rtn_struct.author, rtn_struct.pages, rtn_struct.uid);
 
 	return rtn_struct;
 }
